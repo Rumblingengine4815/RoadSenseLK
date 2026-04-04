@@ -1,0 +1,39 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Android/iOS Native
+android/
+ios/
+
+# Environment / Secret
+.env
+.env.local
+.env.*
+
+# Large ML data
+*.npy
+*.pth
+*.h5
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# IDE / System
+.idea/
+.vsc/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# OS specific files
+[Dd]esktop.ini
