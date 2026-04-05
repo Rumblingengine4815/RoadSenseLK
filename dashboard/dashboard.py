@@ -77,10 +77,10 @@ if 'last_image' in st.session_state:
         cls = det['class'].lower()
         conf = int(det['confidence']*100)
         
-        # Color Mapping (Explicit RGB for Visibility)
+        # Color Mapping (Explicit RGB for Visibility & Legend Sync)
         color = (255, 0, 0) # Red (Pothole)
         if "crack" in cls: color = (255, 165, 0) # Orange
-        elif "speedbump" in cls: color = (0, 255, 0) # Green (High Viz)
+        elif "speedbump" in cls: color = (33, 150, 243) # Blue (Legend Sync)
         
         label = f"{cls.upper()} {conf}%"
         
