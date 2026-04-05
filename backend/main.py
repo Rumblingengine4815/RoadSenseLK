@@ -118,7 +118,7 @@ async def detect_anomaly(file: UploadFile = File(...)):
     
     # Post-processing: YOLOv8 NMS (Master Filter)
     detections = []
-    threshold = 0.25 # Professional Demo-ready sensitivity
+    threshold = 0.15 # Balanced sensitivity for VIVA demo
     
     # Transpose to [5376, 7]
     output = output.T 
@@ -171,7 +171,7 @@ async def detect_anomaly(file: UploadFile = File(...)):
             
             # STREAK GUARD: Ignore boxes that represent garbage (too thin or covering whole top)
             if h < 5 or w < 5: continue # Ignore dots/lines
-            if y < 10 and w > 450: continue # Ignore top streaks (Yuv common anomaly)
+            if y < 10 and w > 450: continue # Ignore top streaks
 
             detections.append({
                 "class": labels[int(c[5])],
@@ -181,7 +181,7 @@ async def detect_anomaly(file: UploadFile = File(...)):
 
     return {
         "status": "success", 
-        "detections": detections[:10], # Return clean results
+        "detections": detections[:10],
         "count": len(detections)
     }
 

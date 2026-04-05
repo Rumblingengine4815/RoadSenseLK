@@ -97,32 +97,36 @@ if 'last_image' in st.session_state:
         st.image(img, caption="AI Vision Analysis (Verified)", use_container_width=True)
     with col2:
         st.write("📊 **Detection Metadata**")
-        st.dataframe(pd.DataFrame(dets).drop(columns=['box']), use_container_width=True)
-        
-        # --- [NEW] SIMULATION MODE FOR VIVA ---
-        st.write("🧪 **Demo Action: Sync to Global Map**")
-        if st.button("🚀 Push to Global Map"):
-            with st.spinner("Uploading to Supabase..."):
-                try:
-                    # Generate a random location in Colombo area
-                    rand_lat = 6.9271 + (np.random.uniform(-0.1, 0.1))
-                    rand_lng = 79.8612 + (np.random.uniform(-0.1, 0.1))
-                    
-                    supabase: Client = create_client(S_URL, S_KEY)
-                    supabase.table('reports').insert({
-                        "anomaly_type": dets[0]['class'] if dets else "Unknown",
-                        "severity": "High",
-                        "confidence": dets[0]['confidence'] if dets else 0.0,
-                        "location": f"POINT({rand_lng} {rand_lat})",
-                        "image_url": "https://example.com/demo.jpg"
-                    }).execute()
-                    
-                    st.success("Successfully Pushed to Global Map!")
-                    st.balloons()
-                    st.cache_data.clear()
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Push Failed: {e}")
+        if dets:
+            st.dataframe(pd.DataFrame(dets).drop(columns=['box'], errors='ignore'), use_container_width=True)
+            
+            # --- [NEW] SIMULATION MODE FOR VIVA ---
+            st.write("🧪 **Demo Action: Sync to Global Map**")
+            if st.button("🚀 Push to Global Map"):
+                with st.spinner("Uploading to Supabase..."):
+                    try:
+                        # Generate a random location in Colombo area
+                        rand_lat = 6.9271 + (np.random.uniform(-0.1, 0.1))
+                        rand_lng = 79.8612 + (np.random.uniform(-0.1, 0.1))
+                        
+                        supabase: Client = create_client(S_URL, S_KEY)
+                        supabase.table('reports').insert({
+                            "anomaly_type": dets[0]['class'] if dets else "Unknown",
+                            "severity": "High",
+                            "confidence": dets[0]['confidence'] if dets else 0.0,
+                            "location": f"POINT({rand_lng} {rand_lat})",
+                            "image_url": "https://example.com/demo.jpg"
+                        }).execute()
+                        
+                        st.success("Successfully Pushed to Global Map!")
+                        st.balloons()
+                        st.cache_data.clear()
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Push Failed: {e}")
+        else:
+            st.success("✅ No Road Anomalies Detected! (Road appears clear)")
+            st.info("💡 Try an image with a clear pothole or speedbump to see the AI in action.")
 
 # 1. Fetch Data from Supabase
 @st.cache_data(ttl=1)
