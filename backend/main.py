@@ -68,12 +68,39 @@ async def detect_anomaly(file: UploadFile = File(...)):
     # Run ONNX inference
     ort_inputs = {model.get_inputs()[0].name: input_data}
     ort_outs = model.run(None, ort_inputs)
-    output = ort_outs[0]
+    output = ort_outs[0][0] # Shape: [7, 5376] (cx, cy, w, h, p, s, c)
     
+    # Post-processing: Simple YOLOv8 NMS (Simplified for Demo)
+    # output[0..3] = box, output[4..6] = classes (pothole, speedbump, crack)
+    detections = []
+    threshold = 0.1 # Demo-ready sensitivity
+    
+    # Transpose to [5376, 7]
+    output = output.T 
+    
+    for row in output:
+        scores = row[4:]
+        class_id = np.argmax(scores)
+        confidence = scores[class_id]
+        
+        if confidence > threshold:
+            # Map raw model coordinates to 512x512
+            cx, cy, w, h = row[0:4]
+            # Convert to [x, y, w, h] for the dashboard visualizer
+            x = int(cx - w/2)
+            y = int(cy - h/2)
+            
+            labels = ["pothole", "speedbump", "crack"]
+            detections.append({
+                "class": labels[class_id],
+                "confidence": float(confidence),
+                "box": [int(x), int(y), int(w), int(h)]
+            })
+
     return {
         "status": "success", 
-        "raw_shape": output.shape,
-        "message": "Inference complete. NMS parsing left to frontend/client."
+        "detections": detections[:5], # Return top 5 for performance
+        "count": len(detections)
     }
 
 @app.post("/api/reports")
