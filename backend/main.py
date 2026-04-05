@@ -66,6 +66,7 @@ async def health_check():
 
 @app.get("/health")
 async def diagnostic_health():
+    # VERSION 2.0 - PATH FINDER MODE
     # Check Supabase
     try:
         supabase.table("reports").select("id").limit(1).execute()
@@ -74,21 +75,23 @@ async def diagnostic_health():
         db_status = "Error (Check Credentials)"
     
     # Path Scanner
-    files_root = os.listdir(os.path.dirname(__file__))
-    models_path = os.path.join(os.path.dirname(__file__), "models")
+    root_dir = os.path.dirname(__file__)
+    files_root = os.listdir(root_dir)
+    models_path = os.path.join(root_dir, "models")
     files_models = os.listdir(models_path) if os.path.exists(models_path) else ["FOLDER NOT FOUND"]
     
     # Check Model
     model = get_model()
-    model_status = "Loaded" if model else "Failed (Check Logs)"
+    model_status = "Loaded" if model else "CRITICAL: Model Missing or Corrupt"
     
     return {
-        "status": "RoadSense API Diagnostic",
+        "api_name": "RoadSense LK Master Backend",
+        "version": "2.0-Diagnostic-Active",
         "database": db_status,
         "ai_model": model_status,
         "files_in_root": files_root,
         "files_in_models": files_models,
-        "env_path": os.path.dirname(__file__),
+        "absolute_path": root_dir,
     }
 
 @app.post("/api/detect")
