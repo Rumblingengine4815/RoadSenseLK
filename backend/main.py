@@ -135,6 +135,10 @@ async def detect_anomaly(file: UploadFile = File(...)):
             x = int(cx - w/2)
             y = int(cy - h/2)
             
+            # GHOST FILTER: Ignore artifacts at the absolute corner or zero-sized boxes
+            if x <= 2 and y <= 2: continue # Kill top-left streaks
+            if int(w) < 10 or int(h) < 10: continue # Kill microscopic noise
+            
             labels = ["pothole", "speedbump", "crack"]
             detections.append({
                 "class": labels[class_id],

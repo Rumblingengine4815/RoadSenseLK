@@ -77,24 +77,24 @@ if 'last_image' in st.session_state:
         cls = det['class'].lower()
         conf = int(det['confidence']*100)
         
-        # COLOR MAPPING (Explicit RGB - Legend Sync)
+        # COLOR MAPPING (Sync with User Screen - Colab Style)
         color = (255, 0, 0) # Red (Pothole)
         if "crack" in cls: color = (255, 165, 0) # Orange
-        elif "speedbump" in cls: color = (33, 150, 243) # Blue
+        elif "speedbump" in cls: color = (0, 255, 255) # Cyan (User Sync)
         
-        # COORDINATE CONVERSION (Force Integers for Drawing Stability)
+        # COORDINATE CONVERSION (Force Integers)
         x_start = int(box[0])
         y_start = int(box[1])
         x_end = int(x_start + box[2])
         y_end = int(y_start + box[3])
         
-        # DRAW BOX (Ultra-High Visibility)
-        draw.rectangle([x_start, y_start, x_end, y_end], outline=color, width=10)
+        # DRAW BOX (Colab Style Professional)
+        draw.rectangle([x_start, y_start, x_end, y_end], outline=color, width=6)
         
-        # DRAW LABEL BACKDROP
-        label = f"{cls.upper()} {conf}%"
-        draw.rectangle([x_start, y_start-30, x_start+150, y_start], fill=color)
-        draw.text((x_start + 5, y_start - 25), label, fill=(255, 255, 255))
+        # DRAW LABEL BACKDROP (Clean Decimal Format)
+        label_text = f"{cls.capitalize()} {det['confidence']:.2f}"
+        draw.rectangle([x_start, y_start-25, x_start+200, y_start], fill=color)
+        draw.text((x_start + 5, y_start - 22), label_text, fill=(0, 0, 0) if color == (0, 255, 255) else (255, 255, 255))
     
     col1, col2 = st.columns([2, 1])
     with col1:
