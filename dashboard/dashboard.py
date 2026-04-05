@@ -67,28 +67,30 @@ if 'last_image' in st.session_state:
     st.divider()
     st.subheader("🔬 Live AI Identification Result")
     
-    img = st.session_state['last_image'].copy()
+    # ENSURE 1:1 COORDINATE SYNC (AI works on 512x512)
+    img = st.session_state['last_image'].copy().resize((512, 512))
     draw = ImageDraw.Draw(img)
     dets = st.session_state['last_detections']
     
     for det in dets:
-        box = det["box"] # [x, y, w, h]
+        box = det["box"] # [x, y, w, h] - these are 512-relative
         cls = det['class'].lower()
         conf = int(det['confidence']*100)
         
-        # Class-Specific Professional Colors
-        color = "#FF0000" # Default Red (Pothole)
-        if "crack" in cls: color = "#FF9800" # Orange
-        elif "speedbump" in cls: color = "#2196F3" # Blue
+        # Color Mapping (Explicit RGB for Visibility)
+        color = (255, 0, 0) # Red (Pothole)
+        if "crack" in cls: color = (255, 165, 0) # Orange
+        elif "speedbump" in cls: color = (0, 255, 0) # Green (High Viz)
         
-        label = f"{cls.upper()} ({conf}%)"
+        label = f"{cls.upper()} {conf}%"
         
-        # High-Visibility Professional Marking
+        # Draw Box (High visibility width)
         rect = [box[0], box[1], box[0]+box[2], box[1]+box[3]]
-        draw.rectangle(rect, outline=color, width=8) # Thicker lines for Demo
-        # Draw background for text to make it readable
-        draw.rectangle([box[0], box[1]-30, box[0]+200, box[1]], fill=color)
-        draw.text((box[0] + 5, box[1] - 25), label, fill="#FFFFFF")
+        draw.rectangle(rect, outline=color, width=6)
+        
+        # Label Background
+        draw.rectangle([box[0], box[1]-25, box[0]+120, box[1]], fill=color)
+        draw.text((box[0] + 5, box[1] - 22), label, fill=(255, 255, 255))
     
     col1, col2 = st.columns([2, 1])
     with col1:
