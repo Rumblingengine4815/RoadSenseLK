@@ -24,14 +24,21 @@ app.add_middleware(
 # Supabase init
 S_URL = os.getenv("SUPABASE_URL")
 S_KEY = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(S_URL, S_KEY)
+
+supabase = None
+if S_URL and S_KEY:
+    try:
+        supabase: Client = create_client(S_URL, S_KEY)
+    except Exception as e:
+        print(f"Supabase Init Error: {e}")
 
 ort_session = None
 
 def get_model():
     global ort_session
     if ort_session is None:
-        model_path = os.path.join(os.path.dirname(__file__), "../models/roadsense.onnx")
+        # Fixed path for Docker container (/app/models/roadsense.onnx)
+        model_path = os.path.join(os.path.dirname(__file__), "models/roadsense.onnx")
         try:
             ort_session = ort.InferenceSession(model_path)
         except Exception as e:
