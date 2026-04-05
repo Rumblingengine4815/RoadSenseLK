@@ -13,7 +13,11 @@ import io
 load_dotenv()
 S_URL = os.getenv("SUPABASE_URL")
 S_KEY = os.getenv("SUPABASE_KEY")
-API_URL = "http://localhost:8000" # Local Backend
+
+# API Configuration (Support Cloud Secrets)
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
+DETECT_ENDPOINT = f"{BACKEND_URL}/api/detect"
+REPORT_ENDPOINT = f"{BACKEND_URL}/api/reports"
 
 st.set_page_config(page_title="RoadSense LK Dashboard", page_icon="🛣️", layout="wide")
 
@@ -38,7 +42,7 @@ if image_file is not None:
             try:
                 # Call the FastAPI backend
                 files = {"file": image_file.getvalue()}
-                response = requests.post(f"{API_URL}/api/detect", files=files)
+                response = requests.post(DETECT_ENDPOINT, files=files)
                 if response.status_code == 200:
                     data = response.json()
                     detections = data.get("detections", [])
