@@ -116,72 +116,35 @@ async def detect_anomaly(file: UploadFile = File(...)):
     ort_outs = model.run(None, ort_inputs)
     output = ort_outs[0][0] # Shape: [7, 5376] (cx, cy, w, h, p, s, c)
     
-    # Post-processing: YOLOv8 NMS (Master Filter)
+    # Post-processing: Simple Original Detection Loop (v1.5)
     detections = []
-    threshold = 0.15 # Balanced sensitivity for VIVA demo
+    threshold = 0.10 # Original high sensitivity
     
     # Transpose to [5376, 7]
     output = output.T 
     
-    # 1. Filter by threshold and gather candidate boxes
-    candidates = []
     for row in output:
         scores = row[4:]
         class_id = np.argmax(scores)
         confidence = scores[class_id]
-        if confidence > threshold:
-            cx, cy, w, h = row[0:4]
-            # Convert to [x1, y1, x2, y2]
-            x1, y1 = cx - w/2, cy - h/2
-            x2, y2 = cx + w/2, cy + h/2
-            candidates.append([x1, y1, x2, y2, confidence, class_id])
-
-    # 2. Simple Non-Maximum Suppression (NMS) logic
-    if candidates:
-        candidates = sorted(candidates, key=lambda x: x[4], reverse=True)
-        final_candidates = []
-        while candidates:
-            best = candidates.pop(0)
-            final_candidates.append(best)
-            # Remove any other overlapping candidates for the same class
-            remaining = []
-            for c in candidates:
-                # Basic overlap check (Intersection over Union)
-                # Area of best and c
-                a1 = (best[2]-best[0]) * (best[3]-best[1])
-                a2 = (c[2]-c[0]) * (c[3]-c[1])
-                # Intersection
-                ix = max(0, min(best[2], c[2]) - max(best[0], c[0]))
-                iy = max(0, min(best[3], c[3]) - max(best[1], c[1]))
-                inter = ix * iy
-                iou = inter / (a1 + a2 - inter) if (a1+a2-inter) > 0 else 0
-                
-                # If they overlap a lot and are the same class, discard the weaker one
-                if iou < 0.45 or best[5] != c[5]:
-                    remaining.append(c)
-            candidates = remaining
         
-        # 3. Clean up the coordinates for the dashboard
-        labels = ["pothole", "speedbump", "crack"]
-        for c in final_candidates:
-            x = int(c[0])
-            y = int(c[1])
-            w = int(c[2] - c[0])
-            h = int(c[3] - c[1])
+        if confidence > threshold:
+            # Map raw model coordinates to 512x512
+            cx, cy, w, h = row[0:4]
+            # Convert to [x, y, w, h] for the dashboard visualizer
+            x = int(cx - w/2)
+            y = int(cy - h/2)
             
-            # STREAK GUARD: Ignore boxes that represent garbage (too thin or covering whole top)
-            if h < 5 or w < 5: continue # Ignore dots/lines
-            if y < 10 and w > 450: continue # Ignore top streaks
-
+            labels = ["pothole", "speedbump", "crack"]
             detections.append({
-                "class": labels[int(c[5])],
-                "confidence": float(c[4]),
-                "box": [x, y, w, h]
+                "class": labels[class_id],
+                "confidence": float(confidence),
+                "box": [int(x), int(y), int(w), int(h)]
             })
 
     return {
         "status": "success", 
-        "detections": detections[:10],
+        "detections": detections[:15], # Show more results as per original behavior
         "count": len(detections)
     }
 
