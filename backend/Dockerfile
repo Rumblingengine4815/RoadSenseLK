@@ -24,8 +24,8 @@ COPY . .
 COPY models/roadsense.onnx /app/models/roadsense.onnx
 
 # Fix the model path in main.py if needed (already handled by relative path)
-# Expose port 8000
-EXPOSE 8000
+# Expose port 7860 (Hugging Face default)
+EXPOSE 7860
 
-# Start the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start the application on port 7860
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
