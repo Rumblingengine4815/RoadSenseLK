@@ -50,11 +50,15 @@ if image_file is not None:
                     # Store in session state to show in main area
                     st.session_state['last_image'] = image
                     st.session_state['last_detections'] = detections
-                    st.sidebar.success(f"Identification Complete: {len(detections)} anomalies found!")
+                    st.sidebar.success(f"Identification Complete!")
                 else:
-                    st.sidebar.error("AI Engine Offline (Check Terminal)")
+                    st.sidebar.error(f"AI Engine Error (Status: {response.status_code})")
+                    with st.sidebar.expander("Show Technical Details"):
+                        st.write(response.text)
             except Exception as e:
-                st.sidebar.error(f"Error calling AI: {e}")
+                st.sidebar.error(f"Cloud Connection Failed")
+                with st.sidebar.expander("Show Technical Details"):
+                    st.write(str(e))
 else:
     st.sidebar.info("Upload a road image to start the Identification flow!")
 
