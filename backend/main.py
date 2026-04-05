@@ -180,26 +180,6 @@ async def submit_report(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/health")
-async def health_check():
-    # Check Supabase
-    try:
-        supabase.table("reports").select("id").limit(1).execute()
-        db_status = "Online"
-    except Exception:
-        db_status = "Error (Check Credentials)"
-    
-    # Check Model
-    model = get_model()
-    model_status = "Loaded" if model else "Failed"
-    
-    return {
-        "status": "RoadSense API is Operational",
-        "database": db_status,
-        "ai_model": model_status,
-        "version": "1.0.0-CloudReady"
-    }
-
 @app.get("/api/anomalies/geojson")
 async def get_geojson():
     res = supabase.table('reports').select("*").execute()
