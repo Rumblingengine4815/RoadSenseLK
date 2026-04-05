@@ -37,12 +37,26 @@ ort_session = None
 def get_model():
     global ort_session
     if ort_session is None:
-        # Fixed path for Docker container (/app/models/roadsense.onnx)
-        model_path = os.path.join(os.path.dirname(__file__), "models/roadsense.onnx")
-        try:
-            ort_session = ort.InferenceSession(model_path)
-        except Exception as e:
-            print("Failed to load model:", e)
+        # Search multiple paths for Cloud vs Local flexibility
+        possible_paths = [
+            os.path.join(os.path.dirname(__file__), "models/roadsense.onnx"),
+            os.path.join(os.path.dirname(__file__), "roadsense.onnx"),
+            "/app/models/roadsense.onnx",
+            "/app/roadsense.onnx"
+        ]
+        
+        last_err = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                try:
+                    ort_session = ort.InferenceSession(path)
+                    print(f"Model successfully loaded from: {path}")
+                    return ort_session
+                except Exception as e:
+                    last_err = e
+                    print(f"Path exists but load failed at {path}: {e}")
+        
+        print(f"Model failed to load from all paths. Last error: {last_err}")
     return ort_session
 
 @app.get("/")
@@ -50,11 +64,40 @@ def get_model():
 async def health_check():
     return {"status": "healthy", "service": "RoadSense LK Backend"}
 
+@app.get("/health")
+async def diagnostic_health():
+    # Check Supabase
+    try:
+        supabase.table("reports").select("id").limit(1).execute()
+        db_status = "Online"
+    except Exception:
+        db_status = "Error (Check Credentials)"
+    
+    # Path Scanner
+    files_root = os.listdir(os.path.dirname(__file__))
+    models_path = os.path.join(os.path.dirname(__file__), "models")
+    files_models = os.listdir(models_path) if os.path.exists(models_path) else ["FOLDER NOT FOUND"]
+    
+    # Check Model
+    model = get_model()
+    model_status = "Loaded" if model else "Failed (Check Logs)"
+    
+    return {
+        "status": "RoadSense API Diagnostic",
+        "database": db_status,
+        "ai_model": model_status,
+        "files_in_root": files_root,
+        "files_in_models": files_models,
+        "env_path": os.path.dirname(__file__),
+    }
+
 @app.post("/api/detect")
 async def detect_anomaly(file: UploadFile = File(...)):
     model = get_model()
     if not model:
-        raise HTTPException(status_code=500, detail="Model failed to load")
+        # Check files for the error report
+        models_exist = os.path.exists(os.path.join(os.path.dirname(__file__), "models/roadsense.onnx"))
+        raise HTTPException(status_code=500, detail=f"Model failed to load. Found at path? {models_exist}")
     
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
