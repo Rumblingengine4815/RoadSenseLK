@@ -77,20 +77,24 @@ if 'last_image' in st.session_state:
         cls = det['class'].lower()
         conf = int(det['confidence']*100)
         
-        # Color Mapping (Explicit RGB for Visibility & Legend Sync)
+        # COLOR MAPPING (Explicit RGB - Legend Sync)
         color = (255, 0, 0) # Red (Pothole)
         if "crack" in cls: color = (255, 165, 0) # Orange
-        elif "speedbump" in cls: color = (33, 150, 243) # Blue (Legend Sync)
+        elif "speedbump" in cls: color = (33, 150, 243) # Blue
         
+        # COORDINATE CONVERSION (Force Integers for Drawing Stability)
+        x_start = int(box[0])
+        y_start = int(box[1])
+        x_end = int(x_start + box[2])
+        y_end = int(y_start + box[3])
+        
+        # DRAW BOX (Ultra-High Visibility)
+        draw.rectangle([x_start, y_start, x_end, y_end], outline=color, width=10)
+        
+        # DRAW LABEL BACKDROP
         label = f"{cls.upper()} {conf}%"
-        
-        # Draw Box (High visibility width)
-        rect = [box[0], box[1], box[0]+box[2], box[1]+box[3]]
-        draw.rectangle(rect, outline=color, width=6)
-        
-        # Label Background
-        draw.rectangle([box[0], box[1]-25, box[0]+120, box[1]], fill=color)
-        draw.text((box[0] + 5, box[1] - 22), label, fill=(255, 255, 255))
+        draw.rectangle([x_start, y_start-30, x_start+150, y_start], fill=color)
+        draw.text((x_start + 5, y_start - 25), label, fill=(255, 255, 255))
     
     col1, col2 = st.columns([2, 1])
     with col1:
