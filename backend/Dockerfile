@@ -20,8 +20,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the app
 COPY . .
 
-# Copy the model from the parent directory
-COPY ../models/roadsense.onnx /models/roadsense.onnx
+# Copy the model into the container
+COPY models/roadsense.onnx /app/models/roadsense.onnx
 
 # Fix the model path in main.py if needed (already handled by relative path)
 # Expose port 8000
