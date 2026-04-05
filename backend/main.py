@@ -38,6 +38,11 @@ def get_model():
             print("Failed to load model:", e)
     return ort_session
 
+@app.get("/")
+@app.get("/healthz")
+async def health_check():
+    return {"status": "healthy", "service": "RoadSense LK Backend"}
+
 @app.post("/api/detect")
 async def detect_anomaly(file: UploadFile = File(...)):
     model = get_model()
